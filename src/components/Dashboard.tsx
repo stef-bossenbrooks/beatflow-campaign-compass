@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { CampaignCard } from "./CampaignCard";
-import { BeatUpload } from "./BeatUpload";
-import { Plus, Search, BarChart3, Users, Music, Zap } from "lucide-react";
+import { CampaignDetails } from "./CampaignDetails";
+import { Plus, Search, BarChart3, Users, Music, Zap, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Archive as ArchivePageComponent } from "@/pages/Archive";
+import { Analytics } from "@/pages/Analytics";
 
 interface Beat {
   id: string;
@@ -26,6 +28,9 @@ interface Campaign {
   createdAt: string;
   scheduledFor?: string;
   beats?: Beat[];
+  isRecurring?: boolean;
+  emailList?: string[];
+  schedule?: string;
 }
 
 const sampleCampaigns: Campaign[] = [
@@ -89,10 +94,13 @@ const sampleCampaigns: Campaign[] = [
 export const Dashboard = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>(sampleCampaigns);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedView, setSelectedView] = useState<"campaigns" | "upload" | "analytics">("campaigns");
+  const [selectedView, setSelectedView] = useState<"campaigns" | "analytics" | "archive">("campaigns");
+  const [expandedCampaign, setExpandedCampaign] = useState<Campaign | null>(null);
   const { toast } = useToast();
 
-  const filteredCampaigns = campaigns.filter(campaign =>
+  // Filter out completed campaigns from main dashboard
+  const activeCampaignsData = campaigns.filter(c => c.status !== "completed");
+  const filteredCampaigns = activeCampaignsData.filter(campaign =>
     campaign.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -150,10 +158,25 @@ export const Dashboard = () => {
     });
   };
 
-  const totalCampaigns = campaigns.length;
-  const activeCampaigns = campaigns.filter(c => c.status === "active").length;
-  const totalEmailsSent = campaigns.reduce((sum, c) => sum + c.emailsSent, 0);
-  const avgOpenRate = Math.round(campaigns.reduce((sum, c) => sum + c.openRate, 0) / campaigns.length);
+  const handleExpandCampaign = (id: string) => {
+    const campaign = campaigns.find(c => c.id === id);
+    if (campaign) {
+      setExpandedCampaign(campaign);
+    }
+  };
+
+  const handleBackFromExpanded = () => {
+    setExpandedCampaign(null);
+  };
+
+  const handleViewArchive = (campaign: Campaign) => {
+    setExpandedCampaign(campaign);
+  };
+
+  const totalCampaigns = activeCampaignsData.length;
+  const activeCampaigns = activeCampaignsData.filter(c => c.status === "active").length;
+  const totalEmailsSent = activeCampaignsData.reduce((sum, c) => sum + c.emailsSent, 0);
+  const avgOpenRate = activeCampaignsData.length > 0 ? Math.round(activeCampaignsData.reduce((sum, c) => sum + c.openRate, 0) / activeCampaignsData.length) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,20 +204,20 @@ export const Dashboard = () => {
                   Campaigns
                 </Button>
                 <Button
-                  variant={selectedView === "upload" ? "primary" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedView("upload")}
-                >
-                  <Music className="w-4 h-4 mr-2" />
-                  Upload
-                </Button>
-                <Button
                   variant={selectedView === "analytics" ? "primary" : "ghost"}
                   size="sm"
                   onClick={() => setSelectedView("analytics")}
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Analytics
+                </Button>
+                <Button
+                  variant={selectedView === "archive" ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedView("archive")}
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  Archive
                 </Button>
               </nav>
             </div>
@@ -208,7 +231,12 @@ export const Dashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {selectedView === "campaigns" && (
+        {expandedCampaign ? (
+          <CampaignDetails
+            campaign={expandedCampaign}
+            onBack={handleBackFromExpanded}
+          />
+        ) : selectedView === "campaigns" && (
           <>
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -298,37 +326,22 @@ export const Dashboard = () => {
                   onDuplicate={handleDuplicateCampaign}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
+                  onExpand={handleExpandCampaign}
                 />
               ))}
             </div>
           </>
         )}
-
-        {selectedView === "upload" && (
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-2">Upload Beats</h2>
-              <p className="text-muted-foreground">
-                Upload your beats and organize them for your email campaigns
-              </p>
-            </div>
-            <BeatUpload onBeatsUploaded={(beats) => console.log("Beats uploaded:", beats)} />
-          </div>
+        
+        {selectedView === "analytics" && (
+          <Analytics onBack={() => setSelectedView("campaigns")} />
         )}
 
-        {selectedView === "analytics" && (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-electric-blue/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BarChart3 className="w-8 h-8 text-electric-blue" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Analytics Dashboard</h2>
-            <p className="text-muted-foreground mb-6">
-              Detailed analytics and reporting features coming soon
-            </p>
-            <Button variant="outline">
-              Learn More
-            </Button>
-          </div>
+        {selectedView === "archive" && (
+          <ArchivePageComponent 
+            onBack={() => setSelectedView("campaigns")}
+            onViewCampaign={handleViewArchive}
+          />
         )}
       </div>
     </div>
