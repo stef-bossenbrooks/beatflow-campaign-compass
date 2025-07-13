@@ -8,6 +8,13 @@ import { BeatUpload } from "./BeatUpload";
 import { Plus, Search, BarChart3, Users, Music, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface Beat {
+  id: string;
+  name: string;
+  duration: string;
+  size: string;
+}
+
 interface Campaign {
   id: string;
   name: string;
@@ -18,6 +25,7 @@ interface Campaign {
   clickRate: number;
   createdAt: string;
   scheduledFor?: string;
+  beats?: Beat[];
 }
 
 const sampleCampaigns: Campaign[] = [
@@ -30,6 +38,11 @@ const sampleCampaigns: Campaign[] = [
     openRate: 68,
     clickRate: 24,
     createdAt: "2024-01-15",
+    beats: [
+      { id: "b1", name: "Dark Trap Banger.wav", duration: "3:22", size: "15.2 MB" },
+      { id: "b2", name: "Melodic Trap Vibes.wav", duration: "2:58", size: "12.8 MB" },
+      { id: "b3", name: "808 Heavy Hitter.wav", duration: "3:45", size: "17.1 MB" }
+    ]
   },
   {
     id: "2", 
@@ -40,6 +53,10 @@ const sampleCampaigns: Campaign[] = [
     openRate: 72,
     clickRate: 31,
     createdAt: "2024-01-10",
+    beats: [
+      { id: "b4", name: "Chill Study Beat.wav", duration: "4:12", size: "18.5 MB" },
+      { id: "b5", name: "Jazz Cafe Vibes.wav", duration: "3:33", size: "14.9 MB" }
+    ]
   },
   {
     id: "3",
@@ -51,6 +68,10 @@ const sampleCampaigns: Campaign[] = [
     clickRate: 0,
     createdAt: "2024-01-20",
     scheduledFor: "2024-02-01",
+    beats: [
+      { id: "b6", name: "Festival Anthem.wav", duration: "5:14", size: "23.7 MB" },
+      { id: "b7", name: "Club Banger 2024.wav", duration: "4:28", size: "19.8 MB" }
+    ]
   },
   {
     id: "4",
@@ -61,6 +82,7 @@ const sampleCampaigns: Campaign[] = [
     openRate: 0,
     clickRate: 0,
     createdAt: "2024-01-22",
+    beats: []
   }
 ];
 
